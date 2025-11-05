@@ -59,10 +59,10 @@ fi
 
 case "${TARGET}" in
     win64)
-        TARGET="win-x64"
+        TARGET="win32-x64"
         ;;
     winarm64)
-        TARGET="win-arm64"
+        TARGET="win32-arm64"
         ;;
     linux64)
         TARGET="linux-x64"
