@@ -1,0 +1,39 @@
+name: Build ffmpeg
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: false
+        type: string
+        default: '8.0'
+
+jobs:
+  build-ffmpeg:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [win64,winarm64,linux64,linuxarm64]
+        variant: [gpl,lgpl,gpl-shared,lgpl-shared]
+
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        
+      - name: 登录Doker GHCR 仓库
+        uses: docker/login-action@28fdb31ff34708d19615a74d67103ddc2ea9725c # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: 构建 ffmpeg
+        run: |
+          ./build.sh ${{ matrix.target }} ${{ matrix.variant }} ${{ inputs.version }}
+
+      - name: 生成构建产物名称
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: ffmpeg-${{ matrix.target }}-${{ matrix.variant }}
+          path: artifacts/*.tar.xz

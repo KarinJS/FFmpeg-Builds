@@ -15,6 +15,7 @@ if ! [[ -f "variants/${TARGET}-${VARIANT}.sh" ]]; then
 fi
 
 LICENSE_FILE="COPYING.LGPLv2.1"
+FFMPEG_VERSION="${1:-8.0}"
 
 ADDINS=()
 ADDINS_STR=""
@@ -30,9 +31,8 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-REPO="${GITHUB_REPOSITORY:-btbn/ffmpeg-builds}"
-REPO="${REPO,,}"
-REGISTRY="${REGISTRY_OVERRIDE:-ghcr.io}"
+REPO="btbn/ffmpeg-builds"
+REGISTRY="ghcr.io"
 BASE_IMAGE="${REGISTRY}/${REPO}/base:latest"
 TARGET_IMAGE="${REGISTRY}/${REPO}/base-${TARGET}:latest"
 IMAGE="${REGISTRY}/${REPO}/${TARGET}-${VARIANT}${ADDINS_STR:+-}${ADDINS_STR}:latest"

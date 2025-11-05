@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'ffmpeg 版本'
+        required: false
+        type: choice
+        default: '8.0'
+        options:
+          - '6.1'
+          - '7.1'
+          - '8.0'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+    with:
+      version: ${{ github.event.inputs.version }} 
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载构建产物
+        uses: actions/download-artifact@f093f21ca4cfa7c75ccbbc2be54da76a0c7e1f05 # v6
+        with:
+          pattern: ffmpeg-*
+          merge-multiple: true
+          path: artifacts
+
+      - name: 生成sha256
+        run: |
+          sha256sum artifacts/*.tar.xz > checksums.sha256 
+          
+      - name: 创建 Release
+        uses: softprops/action-gh-release@0adea5aa98b89355a3ff602e3f2d18bc4d77e7aa # v2
+        with:
+          files: |
+            artifacts/ffmpeg-*.tar.xz
+            checksums.sha256 
+          tag_name: v${{ github.event.inputs.version }}
