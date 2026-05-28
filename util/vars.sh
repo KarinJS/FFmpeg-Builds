@@ -15,7 +15,7 @@ if ! [[ -f "variants/${TARGET}-${VARIANT}.sh" ]]; then
 fi
 
 LICENSE_FILE="COPYING.LGPLv2.1"
-FFMPEG_VERSION="${1:-8.0}"
+FFMPEG_VERSION="${1:-8.1}"
 
 ADDINS=()
 ADDINS_STR=""

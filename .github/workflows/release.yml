@@ -7,11 +7,12 @@ on:
         description: "ffmpeg 版本"
         required: false
         type: choice
-        default: "8.0"
+        default: "8.1"
         options:
           - "6.1"
           - "7.1"
           - "8.0"
+          - "8.1"
 
 jobs:
   build:
