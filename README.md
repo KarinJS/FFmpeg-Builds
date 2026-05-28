@@ -2,6 +2,8 @@
 
 基于 [FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds) 的自动化构建项目。
 
+源码来自 FFmpeg 官方仓库：[FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg)。
+
 提供 Windows (x64/arm64) 和 Linux (x64/arm64) 平台的 FFmpeg 静态构建版本。
 
 Windows 构建目标为 Windows 10 22H2 及更新版本。
@@ -17,6 +19,18 @@ Linux 构建目标为 RHEL/CentOS 8 (glibc-2.28 + linux-4.18) 及更新版本。
 - FFmpeg 6.1
 - FFmpeg 7.1
 - FFmpeg 8.0
+- FFmpeg 8.1
+
+## 同步原理
+
+本项目不锁定具体的小版本号，而是直接从 FFmpeg 官方仓库对应的 **release 分支** 拉取源码构建：
+
+- 每个版本（如 `8.1`）对应官方仓库的 `release/8.1` 分支。
+- 触发构建时拉取该分支的最新提交，因此产物始终包含官方在该分支上发布的最新补丁。
+  例如构建 `8.1` 实际得到的是 `release/8.1` 上的最新代码（即 `8.1.x` 中的最新 patch）。
+- 版本升级（如新增 `8.2`）通过在 `addins/` 下新增对应分支映射、并更新工作流选项完成。
+
+> 简而言之：**版本号到 minor 级别（如 8.1），patch 自动跟随官方 release 分支。**
 
 ## Release 命名规范
 
@@ -57,6 +71,16 @@ SHA256 校验文件命名格式：`ffmpeg-<version>.sha256.txt`
 如果您是普通用户，建议使用上游项目：
 
 - [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds) - 提供每日构建和更完善的支持
+
+## 国内下载（镜像源）
+
+为方便中国大陆用户快捷下载，构建产物已同步至 [npmmirror（cnpm）](https://npmmirror.com/) 镜像源。
+
+国内源构建列表可在此查看：
+
+- https://registry.npmmirror.com/binary.html?path=ffmpeg-builds/
+
+感谢 [cnpm](https://github.com/cnpm) 团队提供的镜像同步支持！🎉
 
 ## Package List
 
@@ -102,6 +126,6 @@ Available variants:
 - `nonfree-shared` Same again, but with the nonfree set of dependencies.
 
 All of those can be optionally combined with any combination of addins:
-- `4.4`/`5.0`/`5.1`/`6.0`/`6.1`/`7.0`/`7.1` to build from the respective release branch instead of master.
+- `4.4`/`5.0`/`5.1`/`6.0`/`6.1`/`7.0`/`7.1`/`8.0`/`8.1` to build from the respective release branch instead of master.
 - `debug` to not strip debug symbols from the binaries. This increases the output size by about 250MB.
 - `lto` build all dependencies and ffmpeg with -flto=auto (HIGHLY EXPERIMENTAL, broken for Windows, sometimes works for Linux)
