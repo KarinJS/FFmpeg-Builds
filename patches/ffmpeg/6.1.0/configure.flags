@@ -1,1 +1,1 @@
---disable-hwaccel=av1_vulkan
+--disable-hwaccel=av1_vulkan --disable-hwaccel=h264_vulkan --disable-hwaccel=hevc_vulkan

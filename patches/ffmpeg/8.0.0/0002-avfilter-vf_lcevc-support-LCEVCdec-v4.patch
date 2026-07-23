@@ -1,0 +1,38 @@
+From 08a81b090b2b8f8f7ec8847d1569eb2042ff1875 Mon Sep 17 00:00:00 2001
+From: James Almer <jamrial@gmail.com>
+Date: Mon, 25 Aug 2025 10:36:26 -0300
+Subject: [PATCH] avfilter/vf_lcevc: support LCEVCdec version 4
+
+Signed-off-by: James Almer <jamrial@gmail.com>
+---
+ libavfilter/vf_lcevc.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libavfilter/vf_lcevc.c b/libavfilter/vf_lcevc.c
+index 8ac2b212c3199..74875e1b84204 100644
+--- a/libavfilter/vf_lcevc.c
++++ b/libavfilter/vf_lcevc.c
+@@ -139,7 +139,11 @@ static int send_frame(AVFilterLink *inlink, AVFrame *in)
+         return ret;
+ 
+     if (sd) {
++#ifdef LCEVC_DEC_VERSION_MAJOR
++        res = LCEVC_SendDecoderEnhancementData(lcevc->decoder, in->pts, sd->data, sd->size);
++#else
+         res = LCEVC_SendDecoderEnhancementData(lcevc->decoder, in->pts, 0, sd->data, sd->size);
++#endif
+         if (res == LCEVC_Again)
+             return AVERROR(EAGAIN);
+         else if (res != LCEVC_Success) {
+@@ -148,7 +152,11 @@ static int send_frame(AVFilterLink *inlink, AVFrame *in)
+         }
+     }
+ 
++#ifdef LCEVC_DEC_VERSION_MAJOR
++    res = LCEVC_SendDecoderBase(lcevc->decoder, in->pts, picture, -1, in);
++#else
+     res = LCEVC_SendDecoderBase(lcevc->decoder, in->pts, 0, picture, -1, in);
++#endif
+     if (res != LCEVC_Success) {
+         av_log(ctx, AV_LOG_ERROR, "LCEVC_SendDecoderBase failed\n");
+         LCEVC_FreePicture(lcevc->decoder, picture);

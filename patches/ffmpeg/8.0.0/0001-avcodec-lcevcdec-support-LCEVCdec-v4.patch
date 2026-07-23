@@ -1,0 +1,38 @@
+From 1c9d70c4af57f288152d53ee3572b305d456daae Mon Sep 17 00:00:00 2001
+From: James Almer <jamrial@gmail.com>
+Date: Mon, 25 Aug 2025 10:36:10 -0300
+Subject: [PATCH] avcodec/lcevcdec: support LCEVCdec version 4
+
+Signed-off-by: James Almer <jamrial@gmail.com>
+---
+ libavcodec/lcevcdec.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/libavcodec/lcevcdec.c b/libavcodec/lcevcdec.c
+index 102f6f32e9513..158957abc5bcd 100644
+--- a/libavcodec/lcevcdec.c
++++ b/libavcodec/lcevcdec.c
+@@ -141,7 +141,11 @@ static int lcevc_send_frame(void *logctx, FFLCEVCFrame *frame_ctx, const AVFrame
+     if (!sd)
+         return 1;
+ 
++#ifdef LCEVC_DEC_VERSION_MAJOR
++    res = LCEVC_SendDecoderEnhancementData(lcevc->decoder, in->pts, sd->data, sd->size);
++#else
+     res = LCEVC_SendDecoderEnhancementData(lcevc->decoder, in->pts, 0, sd->data, sd->size);
++#endif
+     if (res != LCEVC_Success)
+         return AVERROR_EXTERNAL;
+ 
+@@ -149,7 +153,11 @@ static int lcevc_send_frame(void *logctx, FFLCEVCFrame *frame_ctx, const AVFrame
+     if (ret < 0)
+         return ret;
+ 
++#ifdef LCEVC_DEC_VERSION_MAJOR
++    res = LCEVC_SendDecoderBase(lcevc->decoder, in->pts, picture, -1, NULL);
++#else
+     res = LCEVC_SendDecoderBase(lcevc->decoder, in->pts, 0, picture, -1, NULL);
++#endif
+     if (res != LCEVC_Success)
+         return AVERROR_EXTERNAL;
+ 
