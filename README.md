@@ -14,23 +14,25 @@ Linux 构建目标为 RHEL/CentOS 8 (glibc-2.28 + linux-4.18) 及更新版本。
 
 本项目遵循 FFmpeg 官方版本号，提供稳定版本的构建，**不提供每日构建版本**。
 
-当前支持的版本：
+当前跟踪的系列：
 
 - FFmpeg 6.1
 - FFmpeg 7.1
 - FFmpeg 8.0
 - FFmpeg 8.1
 
+上游每发布一个正式版本，本项目就对应发布一个 Release，版本号一一对应。
+
 ## 同步原理
 
-本项目不锁定具体的小版本号，而是直接从 FFmpeg 官方仓库对应的 **release 分支** 拉取源码构建：
+本项目的 Release 与 FFmpeg 官方 tag **一一对应**，使用三段式版本号精确构建：
 
-- 每个版本（如 `8.1`）对应官方仓库的 `release/8.1` 分支。
-- 触发构建时拉取该分支的最新提交，因此产物始终包含官方在该分支上发布的最新补丁。
-  例如构建 `8.1` 实际得到的是 `release/8.1` 上的最新代码（即 `8.1.x` 中的最新 patch）。
-- 版本升级（如新增 `8.2`）通过在 `addins/` 下新增对应分支映射、并更新工作流选项完成。
+- `vX.Y.Z` 对应官方 tag `nX.Y.Z`（如 `v8.1.2` ↔ `n8.1.2`）。
+- `vX.Y.0` 对应官方系列首个正式版 tag `nX.Y`（如 `v8.1.0` ↔ `n8.1`）。
+- 定时任务（`check-upstream` workflow，每日运行）自动检测上游新发布的正式版本，发现缺失即自动触发构建发版；也可在 Actions 页面手动触发 `Release` workflow 并填入版本号。
+- 版本升级（如新增 `9.0` 系列）通过在 `addins/` 下新增对应分支映射、并更新 `check-upstream` workflow 中的系列白名单完成。
 
-> 简而言之：**版本号到 minor 级别（如 8.1），patch 自动跟随官方 release 分支。**
+> 历史说明：早期的两段式 Release（`v6.1`/`v7.1`/`v8.0`/`v8.1`）是当时对应 release 分支的快照构建，因下游镜像已同步而保留，不再更新；新版本一律使用三段式版本号。
 
 ## Release 命名规范
 
@@ -42,7 +44,7 @@ ffmpeg-<version>-<platform>-<arch>-<license>-<optional_info>.tar.xz
 
 ### 字段说明
 
-- **`<version>`**: FFmpeg 版本号（如 `6.1`, `7.1`, `8.0`）
+- **`<version>`**: FFmpeg 版本号，三段式（如 `8.1.2`, `7.1.5`, `6.1.6`）
 - **`<platform>`**: 操作系统平台
   - `win32` - Windows（所有架构统一使用 win32）
   - `linux` - Linux
@@ -58,9 +60,9 @@ ffmpeg-<version>-<platform>-<arch>-<license>-<optional_info>.tar.xz
 
 ### 命名示例
 
-- `ffmpeg-6.1-win32-x64-gpl-shared.tar.xz` - Windows 64位，GPL 许可证，共享库版本
-- `ffmpeg-6.1-linux-x64-lgpl.tar.xz` - Linux 64位，LGPL 许可证，静态版本
-- `ffmpeg-6.1-win32-arm64-gpl.tar.xz` - Windows ARM64，GPL 许可证，静态版本
+- `ffmpeg-8.1.2-win32-x64-gpl-shared.tar.xz` - Windows 64位，GPL 许可证，共享库版本
+- `ffmpeg-8.1.2-linux-x64-lgpl.tar.xz` - Linux 64位，LGPL 许可证，静态版本
+- `ffmpeg-8.1.2-win32-arm64-gpl.tar.xz` - Windows ARM64，GPL 许可证，静态版本
 
 SHA256 校验文件命名格式：`ffmpeg-<version>.sha256.txt`
 
@@ -127,5 +129,6 @@ Available variants:
 
 All of those can be optionally combined with any combination of addins:
 - `4.4`/`5.0`/`5.1`/`6.0`/`6.1`/`7.0`/`7.1`/`8.0`/`8.1` to build from the respective release branch instead of master.
+- A three-part version like `8.1.2` builds the exact upstream tag `n8.1.2` (and `X.Y.0` maps to tag `nX.Y`), while reusing the `X.Y` series image and dependency set.
 - `debug` to not strip debug symbols from the binaries. This increases the output size by about 250MB.
 - `lto` build all dependencies and ffmpeg with -flto=auto (HIGHLY EXPERIMENTAL, broken for Windows, sometimes works for Linux)

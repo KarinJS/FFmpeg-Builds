@@ -1,18 +1,13 @@
 name: Release
+run-name: Release ${{ inputs.version }}
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "ffmpeg 版本"
-        required: false
-        type: choice
-        default: "8.1"
-        options:
-          - "6.1"
-          - "7.1"
-          - "8.0"
-          - "8.1"
+        description: "ffmpeg 版本号,三段式,如 8.1.2(X.Y.0 对应上游 tag nX.Y)"
+        required: true
+        type: string
 
 jobs:
   build:
@@ -33,7 +28,8 @@ jobs:
 
       - name: 生成sha256
         run: |
-          sha256sum artifacts/*.tar.xz > ffmpeg-${{ github.event.inputs.version }}.sha256.txt
+          cd artifacts
+          sha256sum *.tar.xz > ../ffmpeg-${{ github.event.inputs.version }}.sha256.txt
 
       - name: 创建 Release
         uses: softprops/action-gh-release@0adea5aa98b89355a3ff602e3f2d18bc4d77e7aa # v2

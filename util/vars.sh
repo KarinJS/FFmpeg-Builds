@@ -20,13 +20,32 @@ FFMPEG_VERSION="${1:-8.1}"
 ADDINS=()
 ADDINS_STR=""
 while [[ "$#" -gt 0 ]]; do
-    if ! [[ -f "addins/${1}.sh" ]]; then
-        echo "Invalid addin: $1"
+    ADDIN="$1"
+
+    # 三段式版本号(如 8.0.3)拆解为:系列 addin(8.0,决定镜像与依赖开关)
+    # + 精确源码 tag(n8.0.3,经 GIT_BRANCH_OVERRIDE 注入;X.Y.0 对应上游 nX.Y)
+    if ! [[ -f "addins/${ADDIN}.sh" ]] && [[ "$ADDIN" =~ ^([0-9]+\.[0-9]+)\.([0-9]+)$ ]]; then
+        SERIES="${BASH_REMATCH[1]}"
+        PATCH="${BASH_REMATCH[2]}"
+        if [[ -f "addins/${SERIES}.sh" ]]; then
+            if [[ -z "$GIT_BRANCH_OVERRIDE" ]]; then
+                if [[ "$PATCH" == "0" ]]; then
+                    GIT_BRANCH_OVERRIDE="n${SERIES}"
+                else
+                    GIT_BRANCH_OVERRIDE="n${ADDIN}"
+                fi
+            fi
+            ADDIN="$SERIES"
+        fi
+    fi
+
+    if ! [[ -f "addins/${ADDIN}.sh" ]]; then
+        echo "Invalid addin: $ADDIN"
         exit -1
     fi
 
-    ADDINS+=( "$1" )
-    ADDINS_STR="${ADDINS_STR}${ADDINS_STR:+-}$1"
+    ADDINS+=( "$ADDIN" )
+    ADDINS_STR="${ADDINS_STR}${ADDINS_STR:+-}$ADDIN"
 
     shift
 done

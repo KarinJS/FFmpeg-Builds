@@ -1,0 +1,68 @@
+name: Check upstream
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+env:
+  # 跟踪的 FFmpeg 系列白名单;新增系列(如 9.0)时:在此追加 + 新增 addins/<系列>.sh
+  SERIES: "6.1 7.1 8.0 8.1"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检测上游新版本并触发发版
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # 1. 上游正式版本 tag(nX.Y / nX.Y.Z,排除 -dev/-rc/远古命名)→ 三段式版本号列表
+          upstream=$(git ls-remote --tags https://github.com/FFmpeg/FFmpeg \
+            | awk '{print $2}' | sed 's#^refs/tags/##' | grep -v '\^{}' \
+            | grep -E '^n[0-9]+\.[0-9]+(\.[0-9]+)?$' | sed 's/^n//' \
+            | awk -F. 'NF==2 {print $0".0"} NF==3 {print $0}')
+
+          # 2. 白名单过滤
+          wanted=""
+          for v in $upstream; do
+            series="${v%.*}"
+            for s in $SERIES; do
+              if [ "$series" = "$s" ]; then
+                wanted="$wanted $v"
+                break
+              fi
+            done
+          done
+          echo "候选版本:$wanted"
+
+          # 3. 本仓库已有的 release tag
+          existing=$(git ls-remote --tags "https://github.com/${GH_REPO}" \
+            | awk '{print $2}' | sed 's#^refs/tags/##' | grep -v '\^{}' || true)
+
+          # 4. 已有 release.yml 运行记录(任意状态,含失败/进行中,避免重复触发与无限重试;
+          #    构建失败的版本需要手动重跑或手动重新触发)
+          runs=$(gh run list --workflow=release.yml --limit 200 \
+            --json displayTitle --jq '.[].displayTitle' || true)
+
+          # 5. 触发缺失版本的发版
+          for v in $wanted; do
+            if echo "$existing" | grep -qx "v$v"; then
+              echo "跳过 $v:release tag 已存在"
+              continue
+            fi
+            if echo "$runs" | grep -qx "Release $v"; then
+              echo "跳过 $v:已有同版本的 release 运行记录"
+              continue
+            fi
+            echo "触发发版:$v"
+            gh workflow run release.yml -f version="$v"
+            sleep 5
+          done
