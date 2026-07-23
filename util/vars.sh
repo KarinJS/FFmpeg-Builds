@@ -35,6 +35,12 @@ while [[ "$#" -gt 0 ]]; do
                     GIT_BRANCH_OVERRIDE="n${ADDIN}"
                 fi
             fi
+            # 上游 BtbN 已清理部分旧系列的构建镜像;依赖集合一致的系列借用邻近镜像
+            case "$SERIES" in
+            8.0)
+                SERIES="8.1"
+                ;;
+            esac
             ADDIN="$SERIES"
         fi
     fi
