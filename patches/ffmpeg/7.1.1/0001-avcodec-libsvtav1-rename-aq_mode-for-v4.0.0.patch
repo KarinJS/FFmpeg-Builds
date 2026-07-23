@@ -1,0 +1,27 @@
+From 5dc6ff172cad3722831c2e2603013cedd9181b5b Mon Sep 17 00:00:00 2001
+From: Christopher Degawa <ccom@randomderp.com>
+Date: Wed, 21 Jan 2026 00:12:59 -0600
+Subject: [PATCH] avcodec/libsvtav1: rename aq_mode for v4.0.0
+
+Signed-off-by: Christopher Degawa <ccom@randomderp.com>
+Signed-off-by: James Almer <jamrial@gmail.com>
+---
+ libavcodec/libsvtav1.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/libavcodec/libsvtav1.c b/libavcodec/libsvtav1.c
+index 43fe531fde74d..7a3048411d4bf 100644
+--- a/libavcodec/libsvtav1.c
++++ b/libavcodec/libsvtav1.c
+@@ -238,7 +238,11 @@ static int config_enc_params(EbSvtAv1EncConfiguration *param,
+     } else if (svt_enc->qp > 0) {
+         param->qp                   = svt_enc->qp;
+         param->rate_control_mode    = 0;
++#if SVT_AV1_CHECK_VERSION(4, 0, 0)
++        param->aq_mode = 0;
++#else
+         param->enable_adaptive_quantization = 0;
++#endif
+     }
+ 
+     desc = av_pix_fmt_desc_get(avctx->pix_fmt);
