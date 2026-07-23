@@ -1,134 +1,127 @@
-# FFmpeg Static Builds
+# FFmpeg 静态构建(国内下载加速)
 
-基于 [FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds) 的自动化构建项目。
+[![最新版本](https://img.shields.io/github/v/release/KarinJS/FFmpeg-Builds?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC)](https://github.com/KarinJS/FFmpeg-Builds/releases/latest)
+[![国内镜像](https://img.shields.io/badge/%E5%9B%BD%E5%86%85%E9%95%9C%E5%83%8F-npmmirror-blue)](https://registry.npmmirror.com/binary.html?path=ffmpeg-builds/)
 
-源码来自 FFmpeg 官方仓库：[FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg)。
+开箱即用的 FFmpeg 静态编译版，专门服务国内用户：
 
-提供 Windows (x64/arm64) 和 Linux (x64/arm64) 平台的 FFmpeg 静态构建版本。
+- **版本号与 FFmpeg 官方一一对应**（如 `v8.1.2` 就是官方 `n8.1.2` 的源码），官方发新版后自动跟进发布
+- **国内 npmmirror（cnpm）镜像同步**，无需科学上网即可高速下载
+- 覆盖 **Windows / Linux** 双平台、**x64 / ARM64** 双架构，静态与动态库版本齐全
 
-Windows 构建目标为 Windows 10 22H2 及更新版本。
+源码来自 FFmpeg 官方仓库 [FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg)，构建体系基于 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds) 二次开发。
 
-Linux 构建目标为 RHEL/CentOS 8 (glibc-2.28 + linux-4.18) 及更新版本。
+## 下载
+
+| 渠道 | 地址 | 说明 |
+| --- | --- | --- |
+| 国内镜像（推荐） | <https://registry.npmmirror.com/binary.html?path=ffmpeg-builds/> | npmmirror 同步，国内直连高速 |
+| GitHub Releases | <https://github.com/KarinJS/FFmpeg-Builds/releases> | 第一手发布渠道 |
+
+每个版本附带 `ffmpeg-<版本号>.sha256.txt` 校验文件，下载后可校验完整性。
+
+### 怎么选文件?
+
+不确定下哪个的话，按下表对号入座（`<v>` 为版本号，如 `8.1.2`）：
+
+| 你的情况 | 下载这个 |
+| --- | --- |
+| Windows 普通用户 / 命令行使用 | `ffmpeg-<v>-win32-x64-gpl.tar.xz` |
+| Windows ARM 设备（如骁龙笔记本） | `ffmpeg-<v>-win32-arm64-gpl.tar.xz` |
+| Linux 服务器（x86_64） | `ffmpeg-<v>-linux-x64-gpl.tar.xz` |
+| Linux ARM 服务器 / 树莓派等 | `ffmpeg-<v>-linux-arm64-gpl.tar.xz` |
+| 需要 libav* 动态库做二次开发 | 对应平台的 `-shared` 版本 |
+| 商业闭源软件内嵌，担心 GPL 传染 | 对应平台的 `lgpl` 版本（不含 x264/x265 等 GPL 库） |
+
+压缩包为 `.tar.xz` 格式：Linux 直接 `tar -xJf` 解压；Windows 可用 [7-Zip](https://www.7-zip.org/) 或系统自带 `tar` 命令解压。
+
+## 支持平台
+
+| 平台 | 架构 | 最低系统要求 |
+| --- | --- | --- |
+| Windows | x64 / arm64 | Windows 10 22H2 及以上 |
+| Linux | x64 / arm64 | glibc ≥ 2.28、内核 ≥ 4.18（RHEL/CentOS 8 同代及以上） |
 
 ## 版本说明
 
-本项目遵循 FFmpeg 官方版本号，提供稳定版本的构建，**不提供每日构建版本**。
+本项目只构建 FFmpeg **官方正式版**，不提供每日构建（nightly）。当前跟踪的系列：
 
-当前跟踪的系列：
-
-- FFmpeg 6.1
-- FFmpeg 7.1
+- FFmpeg 8.1（最新稳定系列）
 - FFmpeg 8.0
-- FFmpeg 8.1
+- FFmpeg 7.1
+- FFmpeg 6.1
 
-上游每发布一个正式版本，本项目就对应发布一个 Release，版本号一一对应。
+版本对应规则：
 
-## 同步原理
+- `vX.Y.Z` ↔ 官方 tag `nX.Y.Z`（如 `v8.1.2` ↔ `n8.1.2`）
+- `vX.Y.0` ↔ 官方系列首个正式版 tag `nX.Y`（如 `v8.1.0` ↔ `n8.1`）
 
-本项目的 Release 与 FFmpeg 官方 tag **一一对应**，使用三段式版本号精确构建：
+> 早期的两段式 Release（`v6.1` / `v7.1` / `v8.0` / `v8.1`）是当时 release 分支的快照构建，因镜像已同步而保留，**不再更新**，请改用三段式版本。
 
-- `vX.Y.Z` 对应官方 tag `nX.Y.Z`（如 `v8.1.2` ↔ `n8.1.2`）。
-- `vX.Y.0` 对应官方系列首个正式版 tag `nX.Y`（如 `v8.1.0` ↔ `n8.1`）。
-- 定时任务（`check-upstream` workflow，每日运行）自动检测上游新发布的正式版本，发现缺失即自动触发构建发版；也可在 Actions 页面手动触发 `Release` workflow 并填入版本号。
-- 版本升级（如新增 `9.0` 系列）通过在 `addins/` 下新增对应分支映射、并更新 `check-upstream` workflow 中的系列白名单完成。
+### 自动跟版
 
-> 历史说明：早期的两段式 Release（`v6.1`/`v7.1`/`v8.0`/`v8.1`）是当时对应 release 分支的快照构建，因下游镜像已同步而保留，不再更新；新版本一律使用三段式版本号。
+仓库内置定时任务（`check-upstream` workflow）每日检测 FFmpeg 官方新发布的正式版本，发现新版本自动构建发版，无需人工干预。新增系列（如未来的 9.0）只需在 `addins/` 添加分支映射并更新白名单。
 
-## Release 命名规范
+### 老版本兼容性说明
 
-所有发布的构建产物遵循标准命名规范：
+较早的 patch 版本（tag 发布时间较久远）使用当前工具链重新构建时，会自动应用 `patches/ffmpeg/<版本>/` 下回移的官方修复补丁（均为 FFmpeg 官方 commit 原样回移，不改动功能逻辑）。
+
+特例：`6.1.0` 与 `6.1.1` 因官方当时使用的 Vulkan 临时 API 已被现代驱动头文件移除，构建时禁用了 av1/h264/hevc 三项 Vulkan 解码硬件加速；如需该功能请使用 `6.1.2` 及以上版本。
+
+## 产物命名规范
 
 ```
-ffmpeg-<version>-<platform>-<arch>-<license>-<optional_info>.tar.xz
+ffmpeg-<版本号>-<平台>-<架构>-<许可证>[-shared].tar.xz
 ```
 
-### 字段说明
+| 字段 | 取值 | 说明 |
+| --- | --- | --- |
+| 版本号 | `8.1.2` 等 | 三段式，与官方一一对应 |
+| 平台 | `win32` / `linux` | Windows 统一用 `win32`（含 64 位） |
+| 架构 | `x64` / `arm64` | — |
+| 许可证 | `gpl` / `lgpl` | `gpl` 含 x264、x265 等全部依赖；`lgpl` 不含 GPL 独占库 |
+| `-shared` | 可选后缀 | 带 libav* 动态库；纯静态版无此后缀 |
 
-- **`<version>`**: FFmpeg 版本号，三段式（如 `8.1.2`, `7.1.5`, `6.1.6`）
-- **`<platform>`**: 操作系统平台
-  - `win32` - Windows（所有架构统一使用 win32）
-  - `linux` - Linux
-- **`<arch>`**: 系统架构
-  - `x64` - 64位 x86 架构
-  - `arm64` - 64位 ARM 架构
-- **`<license>`**: 许可证类型
-  - `gpl` - GNU General Public License（包含所有依赖库，如 x264、x265）
-  - `lgpl` - Lesser General Public License（不含 GPL-only 库）
-- **`<optional_info>`**: 可选信息（如果没有则省略此字段）
-  - `shared` - 共享库版本（包含 libav* 动态库）
-  - 静态版本默认省略此字段
+示例：
 
-### 命名示例
+- `ffmpeg-8.1.2-win32-x64-gpl.tar.xz` —— Windows x64、GPL、静态
+- `ffmpeg-8.1.2-linux-x64-lgpl.tar.xz` —— Linux x64、LGPL、静态
+- `ffmpeg-8.1.2-win32-arm64-gpl-shared.tar.xz` —— Windows ARM64、GPL、含动态库
 
-- `ffmpeg-8.1.2-win32-x64-gpl-shared.tar.xz` - Windows 64位，GPL 许可证，共享库版本
-- `ffmpeg-8.1.2-linux-x64-lgpl.tar.xz` - Linux 64位，LGPL 许可证，静态版本
-- `ffmpeg-8.1.2-win32-arm64-gpl.tar.xz` - Windows ARM64，GPL 许可证，静态版本
+## 内置依赖
 
-SHA256 校验文件命名格式：`ffmpeg-<version>.sha256.txt`
+GPL 版本内置 x264、x265、SVT-AV1、dav1d、VP8/VP9、opus、mp3lame 等主流编解码器与滤镜依赖，完整列表见 [`scripts.d/`](scripts.d/) 目录（每个脚本对应一个依赖包）。
 
-## 面向人群
+注：ARM64 Linux 因上游依赖限制缺少少量组件（如 Intel QSV 相关的 libmfx/libva、davs2/xavs2）。
 
-⚠️ **本项目主要面向自动化场景和 CI/CD 集成**
+## 自行构建
 
-如果您是普通用户，建议使用上游项目：
+需要 bash 与 docker 环境：
 
-- [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds) - 提供每日构建和更完善的支持
+```bash
+# 构建镜像
+./makeimage.sh <目标平台> <变体> [附加项...]
 
-## 国内下载（镜像源）
+# 构建 FFmpeg(产物输出到 artifacts/ 目录)
+./build.sh <目标平台> <变体> [附加项...]
 
-为方便中国大陆用户快捷下载，构建产物已同步至 [npmmirror（cnpm）](https://npmmirror.com/) 镜像源。
+# 示例:构建 Windows x64 GPL 版的 FFmpeg 8.1.2
+./build.sh win64 gpl 8.1.2
+```
 
-国内源构建列表可在此查看：
+- 目标平台：`win64` / `winarm64` / `linux64` / `linuxarm64`
+- 变体：`gpl` / `lgpl` / `gpl-shared` / `lgpl-shared`
+- 附加项：
+  - 三段式版本号（如 `8.1.2`）—— 精确构建官方对应 tag，自动复用所属系列的镜像与依赖
+  - 两段式系列号（如 `8.1`）—— 构建对应 release 分支最新代码
+  - `debug` —— 保留调试符号（体积增大约 250MB）
 
-- https://registry.npmmirror.com/binary.html?path=ffmpeg-builds/
+## 致谢
 
-感谢 [cnpm](https://github.com/cnpm) 团队提供的镜像同步支持！🎉
+- [FFmpeg](https://ffmpeg.org/) —— 一切的源头
+- [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds) —— 本项目基于其构建体系，需要每日构建版的用户请移步
+- [cnpm / npmmirror](https://github.com/cnpm) 团队 —— 提供国内镜像同步支持 🎉
 
-## Package List
+## 许可证
 
-For a list of included dependencies check the scripts.d directory.
-Every file corresponds to its respective package.
-
-## How to make a build
-
-### Prerequisites
-
-- bash
-- docker
-
-### Build Image
-
-- `./makeimage.sh target variant [addin [addin] [addin] ...]`
-
-### Build FFmpeg
-
-- `./build.sh target variant [addin [addin] [addin] ...]`
-
-On success, the resulting zip file will be in the `artifacts` subdir.
-
-### Targets, Variants and Addins
-
-Available targets:
-- `win64` (x86_64 Windows)
-- `win32` (x86 Windows)
-- `linux64` (x86_64 Linux, glibc>=2.28, linux>=4.18)
-- `linuxarm64` (arm64 (aarch64) Linux, glibc>=2.28, linux>=4.18)
-
-The linuxarm64 target will not build some dependencies due to lack of arm64 (aarch64) architecture support or cross-compiling restrictions.
-
-- `davs2` and `xavs2`: aarch64 support is broken.
-- `libmfx` and `libva`: Library for Intel QSV, so there is no aarch64 support.
-
-Available variants:
-- `gpl` Includes all dependencies, even those that require full GPL instead of just LGPL.
-- `lgpl` Lacking libraries that are GPL-only. Most prominently libx264 and libx265.
-- `nonfree` Includes fdk-aac in addition to all the dependencies of the gpl variant.
-- `gpl-shared` Same as gpl, but comes with the libav* family of shared libs instead of pure static executables.
-- `lgpl-shared` Same again, but with the lgpl set of dependencies.
-- `nonfree-shared` Same again, but with the nonfree set of dependencies.
-
-All of those can be optionally combined with any combination of addins:
-- `4.4`/`5.0`/`5.1`/`6.0`/`6.1`/`7.0`/`7.1`/`8.0`/`8.1` to build from the respective release branch instead of master.
-- A three-part version like `8.1.2` builds the exact upstream tag `n8.1.2` (and `X.Y.0` maps to tag `nX.Y`), while reusing the `X.Y` series image and dependency set.
-- `debug` to not strip debug symbols from the binaries. This increases the output size by about 250MB.
-- `lto` build all dependencies and ffmpeg with -flto=auto (HIGHLY EXPERIMENTAL, broken for Windows, sometimes works for Linux)
+构建脚本遵循本仓库 [LICENSE](LICENSE)；FFmpeg 产物的使用需遵循对应的 GPL / LGPL 许可证条款。
